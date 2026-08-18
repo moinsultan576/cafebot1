@@ -1,0 +1,208 @@
+{
+  "items": [
+    {
+      "id": "coffee-espresso",
+      "name": "Espresso",
+      "category": "Coffee",
+      "description": "A concentrated shot of rich, dark-roast espresso.",
+      "price": 3.00,
+      "sizes": [
+        { "name": "Single", "price": 3.00 },
+        { "name": "Double", "price": 3.75 }
+      ],
+      "options": ["Extra shot +0.75"],
+      "allergens": [],
+      "dietary": ["vegan", "gluten-free"],
+      "available": true
+    },
+    {
+      "id": "coffee-cappuccino",
+      "name": "Cappuccino",
+      "category": "Coffee",
+      "description": "Espresso topped with steamed milk and a thick layer of foam.",
+      "price": 4.25,
+      "sizes": [
+        { "name": "Small", "price": 4.25 },
+        { "name": "Medium", "price": 4.75 },
+        { "name": "Large", "price": 5.25 }
+      ],
+      "options": ["Oat milk +0.50", "Almond milk +0.50", "Extra shot +0.75"],
+      "allergens": ["milk"],
+      "dietary": ["vegetarian", "gluten-free"],
+      "available": true
+    },
+    {
+      "id": "coffee-latte",
+      "name": "Caffe Latte",
+      "category": "Coffee",
+      "description": "Espresso with steamed milk and a light layer of foam.",
+      "price": 4.50,
+      "sizes": [
+        { "name": "Small", "price": 4.50 },
+        { "name": "Medium", "price": 5.00 },
+        { "name": "Large", "price": 5.50 }
+      ],
+      "options": ["Oat milk +0.50", "Almond milk +0.50", "Vanilla syrup +0.50", "Caramel syrup +0.50"],
+      "allergens": ["milk"],
+      "dietary": ["vegetarian", "gluten-free"],
+      "available": true
+    },
+    {
+      "id": "coffee-cold-brew",
+      "name": "Cold Brew",
+      "category": "Coffee",
+      "description": "Slow-steeped for 18 hours, served over ice for a smooth, low-acid taste.",
+      "price": 4.75,
+      "sizes": [
+        { "name": "Medium", "price": 4.75 },
+        { "name": "Large", "price": 5.50 }
+      ],
+      "options": ["Oat milk +0.50", "Vanilla syrup +0.50"],
+      "allergens": [],
+      "dietary": ["vegan", "gluten-free"],
+      "available": true
+    },
+    {
+      "id": "tea-chai-latte",
+      "name": "Chai Latte",
+      "category": "Tea",
+      "description": "Spiced black tea blended with steamed milk.",
+      "price": 4.50,
+      "sizes": [
+        { "name": "Small", "price": 4.50 },
+        { "name": "Medium", "price": 5.00 },
+        { "name": "Large", "price": 5.50 }
+      ],
+      "options": ["Oat milk +0.50", "Extra spice shot +0.50"],
+      "allergens": ["milk"],
+      "dietary": ["vegetarian"],
+      "available": true
+    },
+    {
+      "id": "tea-english-breakfast",
+      "name": "English Breakfast Tea",
+      "category": "Tea",
+      "description": "Classic full-bodied black tea, served with milk on request.",
+      "price": 3.25,
+      "sizes": [
+        { "name": "Cup", "price": 3.25 },
+        { "name": "Pot", "price": 4.75 }
+      ],
+      "options": ["Milk +0.00", "Honey +0.25"],
+      "allergens": [],
+      "dietary": ["vegan", "gluten-free"],
+      "available": true
+    },
+    {
+      "id": "cold-drink-iced-matcha",
+      "name": "Iced Matcha Latte",
+      "category": "Cold Drinks",
+      "description": "Ceremonial-grade matcha whisked with cold milk over ice.",
+      "price": 5.25,
+      "sizes": [
+        { "name": "Medium", "price": 5.25 },
+        { "name": "Large", "price": 5.95 }
+      ],
+      "options": ["Oat milk +0.50", "Extra matcha shot +0.75"],
+      "allergens": ["milk"],
+      "dietary": ["vegetarian", "gluten-free"],
+      "available": true
+    },
+    {
+      "id": "pastry-croissant",
+      "name": "Butter Croissant",
+      "category": "Pastries",
+      "description": "Flaky, all-butter croissant baked fresh daily.",
+      "price": 3.50,
+      "sizes": [],
+      "options": ["Warmed +0.00"],
+      "allergens": ["gluten", "milk", "eggs"],
+      "dietary": ["vegetarian"],
+      "available": true
+    },
+    {
+      "id": "pastry-blueberry-muffin",
+      "name": "Blueberry Muffin",
+      "category": "Pastries",
+      "description": "Moist muffin loaded with fresh blueberries.",
+      "price": 3.75,
+      "sizes": [],
+      "options": [],
+      "allergens": ["gluten", "milk", "eggs"],
+      "dietary": ["vegetarian"],
+      "available": true
+    },
+    {
+      "id": "breakfast-avocado-toast",
+      "name": "Avocado Toast",
+      "category": "Breakfast",
+      "description": "Smashed avocado, chili flakes, and lemon on toasted sourdough.",
+      "price": 7.50,
+      "sizes": [],
+      "options": ["Add poached egg +1.50", "Add feta +1.00"],
+      "allergens": ["gluten"],
+      "dietary": ["vegan", "vegetarian"],
+      "available": true
+    },
+    {
+      "id": "sandwich-ham-cheese",
+      "name": "Ham & Cheese Sandwich",
+      "category": "Sandwiches",
+      "description": "Sliced ham and melted cheddar on grilled sourdough.",
+      "price": 7.95,
+      "sizes": [],
+      "options": ["Add tomato +0.50", "Swap to gluten-free bread +1.00"],
+      "allergens": ["gluten", "milk"],
+      "dietary": [],
+      "available": true
+    },
+    {
+      "id": "sandwich-turkey-club",
+      "name": "Turkey Club Sandwich",
+      "category": "Sandwiches",
+      "description": "Roast turkey, bacon, lettuce, and tomato on toasted white bread.",
+      "price": 8.95,
+      "sizes": [],
+      "options": ["Swap to gluten-free bread +1.00", "No bacon +0.00"],
+      "allergens": ["gluten", "eggs"],
+      "dietary": [],
+      "available": true
+    },
+    {
+      "id": "salad-caesar",
+      "name": "Caesar Salad",
+      "category": "Salads",
+      "description": "Romaine lettuce, parmesan, croutons, and Caesar dressing.",
+      "price": 8.50,
+      "sizes": [],
+      "options": ["Add grilled chicken +2.50", "No croutons (gluten-free) +0.00"],
+      "allergens": ["gluten", "milk", "fish", "eggs"],
+      "dietary": ["vegetarian"],
+      "available": true
+    },
+    {
+      "id": "dessert-choc-chip-cookie",
+      "name": "Chocolate Chip Cookie",
+      "category": "Desserts",
+      "description": "Soft-baked cookie loaded with chocolate chips.",
+      "price": 2.75,
+      "sizes": [],
+      "options": [],
+      "allergens": ["gluten", "milk", "eggs"],
+      "dietary": ["vegetarian"],
+      "available": true
+    },
+    {
+      "id": "dessert-cheesecake",
+      "name": "New York Cheesecake",
+      "category": "Desserts",
+      "description": "Creamy classic cheesecake on a graham cracker crust.",
+      "price": 5.50,
+      "sizes": [],
+      "options": ["Add berry compote +0.75"],
+      "allergens": ["gluten", "milk", "eggs"],
+      "dietary": ["vegetarian"],
+      "available": false
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+.env
+node_modules/
+__pycache__/
+*.pyc
+.DS_Store
+
+# Accumulates real customer names/addresses once deployed — never commit it.
+data/orders.json

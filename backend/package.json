@@ -1,0 +1,13 @@
+{
+  "name": "cafebot-backend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Minimal backend for CafeBot's /api/chat endpoint.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

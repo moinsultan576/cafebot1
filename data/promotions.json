@@ -1,0 +1,44 @@
+{
+  "_note": "CafeBot must only offer or apply promotions where \"active\" is true. Inactive promotions must never be mentioned or applied.",
+  "promotions": [
+    {
+      "id": "promo-happy-hour",
+      "name": "Afternoon Happy Hour",
+      "rule": "20% off all Coffee category drinks, ordered between 2:00 PM and 4:00 PM.",
+      "discount": { "type": "percent", "value": 20 },
+      "eligibility": {
+        "categories": ["Coffee"],
+        "time_window": { "start": "14:00", "end": "16:00" },
+        "min_order_total": 0,
+        "customer_type": "any"
+      },
+      "active": true
+    },
+    {
+      "id": "promo-pastry-bundle",
+      "name": "Coffee + Pastry Bundle",
+      "rule": "Get $1.50 off any Pastries item when purchased together with any Coffee item in the same order.",
+      "discount": { "type": "fixed", "value": 1.50 },
+      "eligibility": {
+        "requires_categories": ["Coffee", "Pastries"],
+        "time_window": null,
+        "min_order_total": 0,
+        "customer_type": "any"
+      },
+      "active": true
+    },
+    {
+      "id": "promo-summer-cooldown",
+      "name": "Summer Cooldown",
+      "rule": "$1.00 off any Cold Drinks item, no minimum purchase required.",
+      "discount": { "type": "fixed", "value": 1.00 },
+      "eligibility": {
+        "categories": ["Cold Drinks"],
+        "time_window": null,
+        "min_order_total": 0,
+        "customer_type": "any"
+      },
+      "active": false
+    }
+  ]
+}

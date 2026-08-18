@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CafeBot Chat</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="chat-app">
+    <header class="chat-header">
+      <div class="chat-header-avatar" aria-hidden="true">☕</div>
+      <div class="chat-header-title">
+        <h1>CafeBot</h1>
+        <span class="chat-header-status">Online</span>
+      </div>
+    </header>
+
+    <main class="chat-messages" id="chat-messages" role="log" aria-live="polite" aria-label="Chat conversation">
+      <div class="message bot">
+        <div class="bubble">Hi there! Welcome to CafeBot ☕ How can I help you today?</div>
+      </div>
+      <div class="message customer">
+        <div class="bubble">Hi! Can I see the menu?</div>
+      </div>
+      <div class="message bot">
+        <div class="bubble">Of course! We have coffee, tea, pastries, sandwiches, salads, and desserts. Want me to recommend something?</div>
+      </div>
+      <div class="message customer">
+        <div class="bubble">Yes please, something with coffee.</div>
+      </div>
+      <div class="message bot">
+        <div class="bubble">Our Caffe Latte is a customer favorite — smooth espresso with steamed milk. Would you like to add that to your order?</div>
+      </div>
+    </main>
+
+    <form class="chat-input-row" id="chat-form">
+      <input
+        type="text"
+        id="chat-input"
+        class="chat-input"
+        placeholder="Type a message..."
+        aria-label="Type a message"
+        autocomplete="off"
+      />
+      <button type="submit" class="chat-send-btn" id="chat-send-btn" aria-label="Send message">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">
+          <path d="M2 21l21-9L2 3v7l15 2-15 2v7z" />
+        </svg>
+      </button>
+    </form>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
