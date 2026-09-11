@@ -2,7 +2,7 @@
 // Change this if the backend isn't running on its default port.
 const API_BASE = "http://localhost:3000";
 
-const STATUSES = ["confirmed", "preparing", "ready", "completed", "cancelled"];
+const STATUSES = ["NEW", "PREPARING", "READY", "COMPLETED", "CANCELLED"];
 
 const ordersList = document.getElementById("orders-list");
 const emptyMessage = document.getElementById("empty-message");
@@ -56,18 +56,22 @@ function renderOrderCard(order) {
 
   const fulfillmentLine =
     fulfillment.type === "delivery"
-      ? `Delivery to ${fulfillment.deliveryAddress || "(no address)"}`
+      ? `Delivery to ${fulfillment.deliveryAddress || "(no address)"}${
+          fulfillment.deliveryApartment ? `, ${fulfillment.deliveryApartment}` : ""
+        }`
       : `Pickup${fulfillment.pickupTime ? ` at ${fulfillment.pickupTime}` : ""}`;
 
   card.innerHTML = `
     <div class="order-header">
       <span class="order-id">#${order.orderId.slice(0, 8)}</span>
-      <span class="badge badge-${order.status}">${order.status}</span>
+      <span class="badge badge-${order.status.toLowerCase()}">${order.status}</span>
     </div>
     <div class="order-time">${order.confirmedAt ? new Date(order.confirmedAt).toLocaleString() : ""}</div>
     <div class="order-items">${itemLines || "(no items)"}</div>
     <div class="order-fulfillment">
-      <strong>${fulfillment.type || "unknown"}</strong> — ${fulfillment.name || "(no name)"}<br>
+      <strong>${fulfillment.type || "unknown"}</strong> — ${fulfillment.name || "(no name)"}${
+        fulfillment.phone ? ` · ${fulfillment.phone}` : ""
+      }<br>
       ${fulfillmentLine}
     </div>
     <div class="order-total">Total: $${Number(totals.total || 0).toFixed(2)}</div>

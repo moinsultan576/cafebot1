@@ -12,7 +12,8 @@ loadEnvFile();
 
 const PORT = process.env.PORT || 3000;
 const API_KEY = process.env.ANTHROPIC_API_KEY;
-const MODEL = process.env.AI_MODEL;
+// Defaults to Anthropic's current recommended general-purpose model; override via AI_MODEL in .env.
+const MODEL = process.env.AI_MODEL || "claude-opus-5";
 const MAX_TOKENS = 512;
 
 // Simple flat config: TAX_RATE is a decimal fraction (e.g. 0.08 for 8%),
@@ -23,6 +24,7 @@ const DELIVERY_FEE = Number(process.env.DELIVERY_FEE) || 0;
 const SYSTEM_PROMPT_PATH = path.join(__dirname, "..", "prompts", "system-prompt.md");
 const MENU_PATH = path.join(__dirname, "..", "data", "menu.json");
 const PROMOTIONS_PATH = path.join(__dirname, "..", "data", "promotions.json");
+// Dev-only order storage: a flat JSON file, no database. Revisit before production.
 const ORDERS_PATH = path.join(__dirname, "..", "data", "orders.json");
 const ANTHROPIC_MESSAGES_URL = "https://api.anthropic.com/v1/messages";
 const MAX_TOOL_ITERATIONS = 4;
@@ -61,6 +63,11 @@ function readMenu() {
   }
 }
 
+function getMenuTool() {
+  const activeItems = readMenu().filter((item) => item.available);
+  return { ok: true, message: JSON.stringify(activeItems, null, 2) };
+}
+
 function readActivePromotions() {
   try {
     const promotions = JSON.parse(fs.readFileSync(PROMOTIONS_PATH, "utf8")).promotions || [];
@@ -83,7 +90,7 @@ function writeOrders(orders) {
   fs.writeFileSync(ORDERS_PATH, JSON.stringify(orders, null, 2));
 }
 
-const STAFF_ORDER_STATUSES = ["confirmed", "preparing", "ready", "completed", "cancelled"];
+const STAFF_ORDER_STATUSES = ["NEW", "PREPARING", "READY", "COMPLETED", "CANCELLED"];
 
 function buildSystemPrompt(order) {
   const menu = readMenu();
@@ -93,7 +100,10 @@ function buildSystemPrompt(order) {
     "availability you may reference are listed in the JSON below. Never invent, " +
     "guess, or assume a menu item, price, or detail that is not explicitly present " +
     "here. If asked about something not listed, say it's not on the menu instead " +
-    "of making something up.\n\n" +
+    "of making something up. Some listed items have \"available\": false — these " +
+    "are on the menu but not orderable right now; never describe one as available " +
+    "or offer to add it, and if the customer asks about it or tries to order it, " +
+    "tell them it's currently unavailable.\n\n" +
     JSON.stringify(menu, null, 2);
 
   const recommendationRules =
@@ -129,12 +139,17 @@ function buildSystemPrompt(order) {
 
   const deliveryRules =
     "## Delivery details\n" +
-    "If the customer wants delivery, the order needs a customer name and a " +
-    "full delivery address (both required). Set these with " +
+    "If the customer wants delivery, the order needs a customer name, phone " +
+    "number, and full delivery address (all required). An apartment/unit " +
+    "number and delivery instructions are optional — record them if the " +
+    "customer offers them, but never ask for an apartment/unit unless the " +
+    "address sounds like it needs one, and never press for delivery " +
+    "instructions if they don't offer any. Set these with " +
     "set_delivery_details — check the order details below first and only ask " +
-    "for whatever is still missing. Whenever the address is set or changed, " +
-    "you must read the full address back to the customer yourself, word for " +
-    "word, and explicitly ask them to confirm it's correct. Only call " +
+    "for whatever is still missing. Whenever the address or apartment/unit is " +
+    "set or changed, you must read the full address back to the customer " +
+    "yourself, word for word (including the apartment/unit if there is one), " +
+    "and explicitly ask them to confirm it's correct. Only call " +
     "confirm_delivery_address after they clearly confirm it — a vague reply " +
     "like \"ok\" or \"sounds good\" is not enough, and the order details below " +
     "will show whether it's already confirmed. If they say anything about the " +
@@ -153,9 +168,10 @@ function buildSystemPrompt(order) {
     "customer is ready, review the order with get_order_summary and finalize " +
     "it with confirm_order. Before calling any of these tools, make sure you " +
     "have the exact details needed — especially size for items with a sizes " +
-    "list, and an explicitly confirmed address for delivery. Never guess a " +
-    "size, option, promotion, name, address, or any other required detail; " +
-    "ask the customer first if anything is missing or unclear.";
+    "list, and a phone number plus an explicitly confirmed address for " +
+    "delivery. Never guess a size, option, promotion, name, phone number, " +
+    "address, or any other required detail; ask the customer first if " +
+    "anything is missing or unclear.";
 
   const confirmationRules =
     "## Confirmation gate\n" +
@@ -196,6 +212,15 @@ function buildSystemPrompt(order) {
 }
 
 const TOOLS = [
+  {
+    name: "getMenu",
+    description:
+      "Get the current menu: only items available to order right now, with their name, price, sizes, options, allergens, and dietary info. Use this to answer menu or pricing questions instead of guessing.",
+    input_schema: {
+      type: "object",
+      properties: {},
+    },
+  },
   {
     name: "add_item_to_order",
     description:
@@ -310,7 +335,7 @@ const TOOLS = [
   {
     name: "set_delivery_details",
     description:
-      "Record the customer's name and/or delivery address for the order. Both are required before checkout for a delivery order. Only pass the fields you actually have new information for — omit customerName if it's already set and you're only adding/changing the address, or vice versa. Never guess a name or address the customer didn't give. After setting or changing the address, you must read it back to the customer in full and get their explicit confirmation or a correction before calling confirm_delivery_address.",
+      "Record the customer's name, phone number, and/or delivery address (plus apartment/unit and delivery instructions, if given) for the order. Name, phone, and address are required before checkout for a delivery order; apartment/unit and delivery instructions are optional. Only pass the fields you actually have new information for — omit any field that's already set and unchanged. Never guess a name, phone number, address, apartment/unit, or delivery instructions the customer didn't give. After setting or changing the address or apartment/unit, you must read the full address back to the customer (including the apartment/unit, if any) and get their explicit confirmation or a correction before calling confirm_delivery_address.",
     input_schema: {
       type: "object",
       properties: {
@@ -318,9 +343,21 @@ const TOOLS = [
           type: "string",
           description: "The customer's name for the delivery order.",
         },
+        phone: {
+          type: "string",
+          description: "The customer's phone number for the delivery order.",
+        },
         address: {
           type: "string",
           description: "The full delivery address, exactly as given by the customer.",
+        },
+        apartment: {
+          type: "string",
+          description: "Apartment, suite, or unit number, if the customer has one. Optional.",
+        },
+        instructions: {
+          type: "string",
+          description: "Delivery instructions from the customer, e.g. a gate code or where to leave the order. Optional.",
         },
       },
     },
@@ -344,6 +381,15 @@ const TOOLS = [
     },
   },
   {
+    name: "viewCart",
+    description:
+      "Get a quick, itemized view of what's currently in the order right now: each item, its size, quantity, and customizations. No totals or pricing — use get_order_summary instead when the customer wants the full checkout review with pricing.",
+    input_schema: {
+      type: "object",
+      properties: {},
+    },
+  },
+  {
     name: "confirm_order",
     description:
       "Finalize the order. Only call this after calling get_order_summary, presenting the full summary to the customer, and receiving a clear, explicit, unambiguous confirmation from them (e.g. \"yes\", \"that's correct\", \"confirm it\") — a vague reply like \"ok\", \"sounds good\", or \"sure\" does not count and must never be treated as confirmation; if their intent is unclear, ask them to confirm explicitly instead of calling this. The tool will refuse if the order is incomplete or if anything changed since the last summary (call get_order_summary again in that case).",
@@ -359,8 +405,17 @@ function extractOptionPrice(optionText) {
   return match ? parseFloat(match[1]) : 0;
 }
 
-function calculateSubtotal(order) {
+// categories, if given, scopes the subtotal to only items in those menu
+// categories — used to correctly compute a category-specific percent
+// discount (e.g. "20% off Coffee drinks") against just that category's
+// items, instead of the whole order.
+function calculateSubtotal(order, categories) {
+  const menu = categories ? readMenu() : null;
   const subtotal = order.items.reduce((sum, item) => {
+    if (categories) {
+      const menuItem = menu.find((entry) => entry.id === item.itemId);
+      if (!menuItem || !categories.includes(menuItem.category)) return sum;
+    }
     const optionsCost = (item.options || []).reduce((s, opt) => s + extractOptionPrice(opt), 0);
     return sum + (item.unitPrice + optionsCost) * item.quantity;
   }, 0);
@@ -425,11 +480,20 @@ function getOrderBreakdown(order) {
     const promotion = readActivePromotions().find((p) => p.id === order.promotion);
     if (!promotion || !isPromotionEligible(promotion, order, subtotal).ok) {
       order.promotion = null;
+    } else if (promotion.discount.type === "percent") {
+      // A percent discount tied to specific eligibility categories (e.g.
+      // "20% off Coffee drinks") applies only to that category's subtotal,
+      // not the whole order — requires_categories-style bundle promos have
+      // no category field here and fall back to the full subtotal.
+      const eligibility = promotion.eligibility || {};
+      const scopeCategories =
+        Array.isArray(eligibility.categories) && eligibility.categories.length > 0
+          ? eligibility.categories
+          : null;
+      const discountBase = scopeCategories ? calculateSubtotal(order, scopeCategories) : subtotal;
+      discount = discountBase * (promotion.discount.value / 100);
     } else {
-      discount =
-        promotion.discount.type === "percent"
-          ? subtotal * (promotion.discount.value / 100)
-          : promotion.discount.value;
+      discount = promotion.discount.value;
     }
   }
   discount = Math.round(discount * 100) / 100;
@@ -438,6 +502,11 @@ function getOrderBreakdown(order) {
   const tax = Math.round(discountedSubtotal * TAX_RATE * 100) / 100;
   const deliveryFee = order.orderType === "delivery" ? DELIVERY_FEE : 0;
   const total = Math.round((discountedSubtotal + tax + deliveryFee) * 100) / 100;
+
+  // Keep order.total in sync every time a breakdown is computed (not just on
+  // explicit mutations) — otherwise a stale cached total can disagree with
+  // what get_order_summary / the system prompt just showed the customer.
+  order.total = total;
 
   return { subtotal, discount, discountedSubtotal, tax, deliveryFee, total };
 }
@@ -480,8 +549,11 @@ function getOrderSummary(order) {
   const fulfillment = {
     type: order.orderType,
     name: order.customer.name,
+    phone: order.orderType === "delivery" ? order.customer.phone : null,
     pickupTime: order.orderType === "pickup" ? order.pickupTime : null,
     deliveryAddress: order.orderType === "delivery" ? order.deliveryAddress : null,
+    deliveryApartment: order.orderType === "delivery" ? order.deliveryApartment : null,
+    deliveryInstructions: order.orderType === "delivery" ? order.deliveryInstructions : null,
     addressConfirmed: order.orderType === "delivery" ? order.addressConfirmed : null,
   };
 
@@ -512,6 +584,18 @@ function getOrderSummary(order) {
   };
 }
 
+// A lightweight cart view: items, quantities, and customizations only — no
+// pricing. Unlike getOrderSummary, this does not touch summaryReviewed, so
+// it can't be used to satisfy the confirmation gate before checkout.
+function viewCart(order) {
+  return order.items.map((item) => ({
+    name: item.name,
+    size: item.size,
+    quantity: item.quantity,
+    customizations: item.options,
+  }));
+}
+
 // Any action that changes the order invalidates the last summary the
 // customer reviewed, and un-confirms an already-confirmed order — the
 // confirmation gate (confirmOrder) requires a fresh summary and a fresh
@@ -529,11 +613,18 @@ function summarizeOrder(order) {
   if (order.orderType) details.push(`Order type: ${order.orderType}`);
   if (order.customer.name) details.push(`Name: ${order.customer.name}`);
   if (order.pickupTime) details.push(`Pickup time: ${order.pickupTime}`);
+  if (order.orderType === "delivery" && order.customer.phone) {
+    details.push(`Phone: ${order.customer.phone}`);
+  }
   if (order.deliveryAddress) {
+    const apartmentSuffix = order.deliveryApartment ? `, ${order.deliveryApartment}` : "";
     details.push(
-      `Delivery address: ${order.deliveryAddress} (${order.addressConfirmed ? "confirmed" : "not yet confirmed"})`
+      `Delivery address: ${order.deliveryAddress}${apartmentSuffix} (${
+        order.addressConfirmed ? "confirmed" : "not yet confirmed"
+      })`
     );
   }
+  if (order.deliveryInstructions) details.push(`Delivery instructions: ${order.deliveryInstructions}`);
   if (order.confirmed) details.push("Status: confirmed");
 
   if (order.items.length === 0) {
@@ -835,6 +926,8 @@ function setPickupDetails(order, input) {
   order.customer.name = newName;
   order.pickupTime = newPickupTime;
   order.deliveryAddress = null;
+  order.deliveryApartment = null;
+  order.deliveryInstructions = null;
   order.addressConfirmed = false;
   order.total = calculateOrderTotal(order);
   markOrderChanged(order);
@@ -848,10 +941,16 @@ function setPickupDetails(order, input) {
 }
 
 function setDeliveryDetails(order, input) {
-  const { customerName, address } = input || {};
+  const { customerName, phone, address, apartment, instructions } = input || {};
 
-  if (customerName === undefined && address === undefined) {
-    return { ok: false, message: "Provide a customer name and/or a delivery address to set." };
+  if (
+    customerName === undefined &&
+    phone === undefined &&
+    address === undefined &&
+    apartment === undefined &&
+    instructions === undefined
+  ) {
+    return { ok: false, message: "Provide at least one delivery detail to set." };
   }
 
   let newName = order.customer.name;
@@ -862,6 +961,14 @@ function setDeliveryDetails(order, input) {
     newName = customerName.trim();
   }
 
+  let newPhone = order.customer.phone;
+  if (phone !== undefined) {
+    if (typeof phone !== "string" || !phone.trim()) {
+      return { ok: false, message: "phone must be a non-empty string." };
+    }
+    newPhone = phone.trim();
+  }
+
   let newAddress = order.deliveryAddress;
   let addressChanged = false;
   if (address !== undefined) {
@@ -869,7 +976,24 @@ function setDeliveryDetails(order, input) {
       return { ok: false, message: "address must be a non-empty string." };
     }
     newAddress = address.trim();
-    addressChanged = newAddress !== order.deliveryAddress;
+    if (newAddress !== order.deliveryAddress) addressChanged = true;
+  }
+
+  let newApartment = order.deliveryApartment;
+  if (apartment !== undefined) {
+    if (typeof apartment !== "string" || !apartment.trim()) {
+      return { ok: false, message: "apartment must be a non-empty string." };
+    }
+    newApartment = apartment.trim();
+    if (newApartment !== order.deliveryApartment) addressChanged = true;
+  }
+
+  let newInstructions = order.deliveryInstructions;
+  if (instructions !== undefined) {
+    if (typeof instructions !== "string" || !instructions.trim()) {
+      return { ok: false, message: "instructions must be a non-empty string." };
+    }
+    newInstructions = instructions.trim();
   }
 
   if (!newName) {
@@ -878,7 +1002,10 @@ function setDeliveryDetails(order, input) {
 
   order.orderType = "delivery";
   order.customer.name = newName;
+  order.customer.phone = newPhone;
   order.deliveryAddress = newAddress;
+  order.deliveryApartment = newApartment;
+  order.deliveryInstructions = newInstructions;
   order.pickupTime = null;
   if (addressChanged) {
     order.addressConfirmed = false;
@@ -889,17 +1016,21 @@ function setDeliveryDetails(order, input) {
   return {
     ok: true,
     message: addressChanged
-      ? `Delivery address set to "${order.deliveryAddress}" for "${order.customer.name}". Read the full address back to the customer and get their explicit confirmation (or a correction) — do not call confirm_delivery_address until they clearly confirm it.`
+      ? `Delivery address set to "${order.deliveryAddress}"${
+          order.deliveryApartment ? `, ${order.deliveryApartment}` : ""
+        } for "${order.customer.name}". Read the full address back to the customer (including the apartment/unit, if any) and get their explicit confirmation (or a correction) — do not call confirm_delivery_address until they clearly confirm it.`
       : `Updated delivery details for "${order.customer.name}".`,
   };
 }
 
-// addressAtTurnStart is the address as it existed before this request's tool
-// calls ran — see the "snapshotted" comment in handleChat. Requiring it to
-// match the current address means the address must have been set in an
-// earlier turn (and therefore actually shown to the customer, with a chance
-// to reply) — not just-now by set_delivery_details in this same turn.
-function confirmDeliveryAddress(order, addressAtTurnStart) {
+// addressAtTurnStart/apartmentAtTurnStart are the address and apartment/unit
+// as they existed before this request's tool calls ran — see the
+// "snapshotted" comment in handleChat. Requiring both to match the current
+// values means they must have been set in an earlier turn (and therefore
+// actually shown to the customer, with a chance to reply) — not just-now by
+// set_delivery_details in this same turn. Checking only the street address
+// would let an apartment-only change slip through unconfirmed.
+function confirmDeliveryAddress(order, addressAtTurnStart, apartmentAtTurnStart) {
   if (order.orderType !== "delivery") {
     return { ok: false, message: "The order isn't set for delivery yet." };
   }
@@ -909,17 +1040,22 @@ function confirmDeliveryAddress(order, addressAtTurnStart) {
   if (order.addressConfirmed) {
     return { ok: true, message: "The delivery address is already confirmed." };
   }
-  if (order.deliveryAddress !== addressAtTurnStart) {
+  if (order.deliveryAddress !== addressAtTurnStart || order.deliveryApartment !== apartmentAtTurnStart) {
     return {
       ok: false,
       message:
-        "That address was just set in this same turn — read it back to the customer and wait for their explicit confirmation in a new message before calling this.",
+        "The address or apartment/unit was just set or changed in this same turn — read the full address (including apartment/unit) back to the customer and wait for their explicit confirmation in a new message before calling this.",
     };
   }
 
   order.addressConfirmed = true;
   markOrderChanged(order);
-  return { ok: true, message: `Delivery address confirmed: "${order.deliveryAddress}".` };
+  return {
+    ok: true,
+    message: `Delivery address confirmed: "${order.deliveryAddress}"${
+      order.deliveryApartment ? `, ${order.deliveryApartment}` : ""
+    }.`,
+  };
 }
 
 // Appends a confirmed order to data/orders.json (a plain JSON array — no
@@ -935,7 +1071,7 @@ function saveConfirmedOrder(order, sessionId) {
   const record = {
     orderId: crypto.randomUUID(),
     sessionId,
-    status: "confirmed",
+    status: "NEW",
     confirmedAt: new Date().toISOString(),
     items: summary.items,
     fulfillment: summary.fulfillment,
@@ -968,6 +1104,9 @@ function confirmOrder(order, sessionId, summaryReviewedAtTurnStart) {
   }
   if (!order.orderType || !order.customer.name) {
     return { ok: false, message: "Pickup or delivery details, including a name, must be set before the order can be confirmed." };
+  }
+  if (order.orderType === "delivery" && !order.customer.phone) {
+    return { ok: false, message: "A phone number must be set before the order can be confirmed." };
   }
   if (order.orderType === "delivery" && (!order.deliveryAddress || !order.addressConfirmed)) {
     return { ok: false, message: "The delivery address must be set and explicitly confirmed before the order can be confirmed." };
@@ -1003,6 +1142,8 @@ function createOrder() {
     customer: { name: null, phone: null, email: null },
     pickupTime: null, // optional, e.g. "3:30 PM" or "ASAP" — pickup orders only
     deliveryAddress: null, // required for delivery orders
+    deliveryApartment: null, // optional — apartment/suite/unit number
+    deliveryInstructions: null, // optional — e.g. gate code, where to leave the order
     addressConfirmed: false, // customer must explicitly confirm the delivery address
     promotion: null, // promotion id from data/promotions.json
     total: 0,
@@ -1055,14 +1196,16 @@ function handleChat(req, res) {
       return sendJson(res, 400, { error: "Invalid JSON body." });
     }
 
-    const { message, history = [], sessionId: requestedSessionId } = parsed;
+    const { message, history, conversationHistory, sessionId: requestedSessionId } = parsed;
+    // conversationHistory is accepted as an alias for history; history wins if both are sent.
+    const chatHistory = history !== undefined ? history : conversationHistory !== undefined ? conversationHistory : [];
 
     if (typeof message !== "string" || !message.trim()) {
       return sendJson(res, 400, { error: "message is required and must be a non-empty string." });
     }
-    if (!isValidHistory(history)) {
+    if (!isValidHistory(chatHistory)) {
       return sendJson(res, 400, {
-        error: "history must be an array of { role: 'user' | 'assistant', content: string } messages.",
+        error: "history (or conversationHistory) must be an array of { role: 'user' | 'assistant', content: string } messages.",
       });
     }
     if (!API_KEY || !MODEL) {
@@ -1080,7 +1223,8 @@ function handleChat(req, res) {
     // see confirmOrder() and confirmDeliveryAddress().
     const summaryReviewedAtTurnStart = order.summaryReviewed;
     const deliveryAddressAtTurnStart = order.deliveryAddress;
-    const messages = [...history, { role: "user", content: message }];
+    const deliveryApartmentAtTurnStart = order.deliveryApartment;
+    const messages = [...chatHistory, { role: "user", content: message }];
 
     try {
       let reply = "";
@@ -1123,7 +1267,9 @@ function handleChat(req, res) {
 
         const toolResults = toolUses.map((toolUse) => {
           let result;
-          if (toolUse.name === "add_item_to_order") {
+          if (toolUse.name === "getMenu") {
+            result = getMenuTool();
+          } else if (toolUse.name === "add_item_to_order") {
             result = addItemToOrder(order, toolUse.input);
           } else if (toolUse.name === "update_order_item") {
             result = updateOrderItem(order, toolUse.input);
@@ -1136,9 +1282,11 @@ function handleChat(req, res) {
           } else if (toolUse.name === "set_delivery_details") {
             result = setDeliveryDetails(order, toolUse.input);
           } else if (toolUse.name === "confirm_delivery_address") {
-            result = confirmDeliveryAddress(order, deliveryAddressAtTurnStart);
+            result = confirmDeliveryAddress(order, deliveryAddressAtTurnStart, deliveryApartmentAtTurnStart);
           } else if (toolUse.name === "get_order_summary") {
             result = { ok: true, message: JSON.stringify(getOrderSummary(order), null, 2) };
+          } else if (toolUse.name === "viewCart") {
+            result = { ok: true, message: JSON.stringify(viewCart(order), null, 2) };
           } else if (toolUse.name === "confirm_order") {
             result = confirmOrder(order, sessionId, summaryReviewedAtTurnStart);
           } else {
@@ -1159,7 +1307,9 @@ function handleChat(req, res) {
       reply = reply || "Sorry, I couldn't finish that. Could you try again?";
       return sendJson(res, 200, { reply, sessionId, order });
     } catch {
-      return sendJson(res, 500, { error: "Failed to reach the AI API." });
+      return sendJson(res, 500, {
+        error: "Sorry, I'm having trouble responding right now. Please try again in a moment.",
+      });
     }
   });
 }

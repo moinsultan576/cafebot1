@@ -1,4 +1,4 @@
-// Floating chat widget UI. Mock replies only — not wired to the backend yet.
+// Floating chat widget UI. Talks to the real backend at /api/chat.
 
 const chatToggle = document.getElementById("chat-toggle");
 const chatWindow = document.getElementById("chat-window");
@@ -7,7 +7,12 @@ const chatForm = document.getElementById("chat-form");
 const chatInput = document.getElementById("chat-input");
 const chatMessages = document.getElementById("chat-messages");
 
-const MOCK_REPLY = "Hi! I'm CafeBot. My AI brain isn't connected yet.";
+const NETWORK_ERROR_REPLY = "Sorry, I'm having trouble connecting right now. Please try again in a moment.";
+// Keeps the request small — the backend only needs recent context, not the full chat.
+const MAX_HISTORY_MESSAGES = 10;
+
+let conversationHistory = [];
+let sessionId = null;
 
 function addMessage(text, sender) {
   const message = document.createElement("div");
@@ -20,6 +25,13 @@ function addMessage(text, sender) {
   message.appendChild(bubble);
   chatMessages.appendChild(message);
   chatMessages.scrollTop = chatMessages.scrollHeight;
+  return message;
+}
+
+function showTypingIndicator() {
+  const typing = addMessage("...", "bot");
+  typing.classList.add("typing-indicator");
+  return typing;
 }
 
 function openChat() {
@@ -45,7 +57,7 @@ chatToggle.addEventListener("click", () => {
 
 chatClose.addEventListener("click", closeChat);
 
-chatForm.addEventListener("submit", (event) => {
+chatForm.addEventListener("submit", async (event) => {
   event.preventDefault();
 
   const text = chatInput.value.trim();
@@ -54,5 +66,34 @@ chatForm.addEventListener("submit", (event) => {
   addMessage(text, "customer");
   chatInput.value = "";
 
-  addMessage(MOCK_REPLY, "bot");
+  const typing = showTypingIndicator();
+
+  try {
+    const response = await fetch("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message: text,
+        history: conversationHistory.slice(-MAX_HISTORY_MESSAGES),
+        sessionId,
+      }),
+    });
+
+    const data = await response.json();
+    typing.remove();
+
+    if (!response.ok) {
+      addMessage(data.error || NETWORK_ERROR_REPLY, "bot");
+      return;
+    }
+
+    sessionId = data.sessionId || sessionId;
+    conversationHistory.push({ role: "user", content: text });
+    conversationHistory.push({ role: "assistant", content: data.reply });
+
+    addMessage(data.reply, "bot");
+  } catch {
+    typing.remove();
+    addMessage(NETWORK_ERROR_REPLY, "bot");
+  }
 });
