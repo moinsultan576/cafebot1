@@ -93,7 +93,13 @@ function readOrders() {
 }
 
 function writeOrders(orders) {
-  fs.writeFileSync(ORDERS_PATH, JSON.stringify(orders, null, 2));
+  try {
+    fs.writeFileSync(ORDERS_PATH, JSON.stringify(orders, null, 2));
+  } catch (err) {
+    // Read-only serverless filesystems (e.g. Vercel) can't persist this file —
+    // don't let that take down order confirmation itself, just skip saving.
+    console.error("writeOrders: failed to persist orders.json:", err.message);
+  }
 }
 
 const STAFF_ORDER_STATUSES = ["NEW", "PREPARING", "READY", "COMPLETED", "CANCELLED"];
@@ -1312,7 +1318,8 @@ function handleChat(req, res) {
 
       reply = reply || "Sorry, I couldn't finish that. Could you try again?";
       return sendJson(res, 200, { reply, sessionId, order });
-    } catch {
+    } catch (err) {
+      console.error("handleChat failed:", err.message);
       return sendJson(res, 500, {
         error: "Sorry, I'm having trouble responding right now. Please try again in a moment.",
       });
