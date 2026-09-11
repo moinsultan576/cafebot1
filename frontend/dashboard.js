@@ -1,6 +1,6 @@
 // Staff dashboard: reads/updates orders via the backend's /api/orders endpoints.
 // Change this if the backend isn't running on its default port.
-const API_BASE = "http://localhost:3000";
+const API_BASE = "https://cafebot1.vercel.app";
 
 const STATUSES = ["NEW", "PREPARING", "READY", "COMPLETED", "CANCELLED"];
 

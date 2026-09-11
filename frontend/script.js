@@ -1,4 +1,7 @@
-// Floating chat widget UI. Talks to the real backend at /api/chat.
+// Floating chat widget UI. Talks to the real backend's /api/chat.
+// Change this if the backend isn't running on its default port, or before
+// deploying the frontend to a different host than the backend.
+const API_BASE = "https://cafebot1.vercel.app";
 
 const chatToggle = document.getElementById("chat-toggle");
 const chatWindow = document.getElementById("chat-window");
@@ -69,7 +72,7 @@ chatForm.addEventListener("submit", async (event) => {
   const typing = showTypingIndicator();
 
   try {
-    const response = await fetch("/api/chat", {
+    const response = await fetch(`${API_BASE}/api/chat`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

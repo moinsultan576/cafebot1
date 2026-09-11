@@ -18,8 +18,7 @@ CafeBot/
 │   ├── orders.json          # Confirmed orders, appended to at checkout (gitignored — see below)
 │   └── faq.json             # Placeholder; not currently wired up
 ├── frontend/
-│   ├── index.html/script.js/styles.css   # Customer chat UI — currently mock messages only,
-│   │                                       not yet connected to the backend
+│   ├── index.html/script.js/styles.css   # Customer chat UI — talks to the backend's /api/chat
 │   └── dashboard.html/dashboard.js       # Staff dashboard — lists/updates orders via the backend
 ├── backend/
 │   ├── server.js            # The whole backend: /api/chat, /api/orders, /api/orders/:id
@@ -59,12 +58,12 @@ This is two independent pieces — there's no combined build or single
   host must set `PORT`, or the app defaults to `3000`.
 - **Frontend** (`frontend/`) — static files, deployable to any static host
   (Netlify, Vercel, GitHub Pages, an nginx bucket, etc.) or served by a
-  reverse proxy in front of the backend. Before deploying
-  `dashboard.html`, edit the `API_BASE` constant at the top of
-  `frontend/dashboard.js` to the backend's real deployed URL (it defaults
-  to `http://localhost:3000` for local dev). `index.html`'s chat UI has no
-  such setting since it isn't connected to the backend yet — deploying it
-  as-is only shows mock messages, not a working chatbot.
+  reverse proxy in front of the backend. Before deploying, edit the
+  `API_BASE` constant at the top of both `frontend/script.js` and
+  `frontend/dashboard.js` to the backend's real deployed URL (both default
+  to `http://localhost:3000` for local dev) — otherwise the chat widget
+  and staff dashboard will try to reach a backend on the visitor's own
+  machine instead of the real one.
 
 **Order storage caveat:** confirmed orders are appended to
 `data/orders.json`, a plain file on the backend's local disk (see
