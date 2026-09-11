@@ -356,7 +356,7 @@ The moment `confirm_order` passes every gate check above and transitions
 {
   "orderId": "4f3bb753-88fd-4205-aec9-fdbb788eb22a",
   "sessionId": "3ad4bb1f-3b2d-41b6-9db3-a8cd19635b26",
-  "status": "confirmed",
+  "status": "NEW",
   "confirmedAt": "2026-08-18T09:46:16.941Z",
   "items": [{ "name": "Caffe Latte", "size": "Medium", "quantity": 1, "customizations": [], "lineTotal": 5 }],
   "fulfillment": { "type": "pickup", "name": "Robin", "pickupTime": null, "deliveryAddress": null, "addressConfirmed": null },
@@ -391,15 +391,15 @@ tracks and persists whether the order has been reviewed and confirmed.
 Returns every order currently in `data/orders.json`:
 
 ```json
-{ "orders": [ { "orderId": "...", "status": "confirmed", "...": "..." } ] }
+{ "orders": [ { "orderId": "...", "status": "NEW", "...": "..." } ] }
 ```
 
 Used by the staff dashboard (`frontend/dashboard.html`) to list orders.
 
 ## PATCH /api/orders/:orderId
 
-Updates one order's `status`. Body: `{ "status": "preparing" }`. Valid
-values are `confirmed`, `preparing`, `ready`, `completed`, `cancelled`
+Updates one order's `status`. Body: `{ "status": "PREPARING" }`. Valid
+values are `NEW`, `PREPARING`, `READY`, `COMPLETED`, `CANCELLED`
 (`STAFF_ORDER_STATUSES`). Returns `400` for an invalid status, `404` if no
 order matches `orderId`, or `{ "order": {...} }` with the updated order on
 success. This is a direct edit to `data/orders.json` — it doesn't touch any

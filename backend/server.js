@@ -77,6 +77,12 @@ function readActivePromotions() {
   }
 }
 
+// Orders storage: reads/writes data/orders.json as a flat JSON array.
+// This is for development/demo purposes only — plain file writes are not
+// atomic or safe under concurrent requests, and platforms like Vercel run
+// serverless functions on ephemeral/read-only filesystems, so writes here
+// are not guaranteed to persist in production. Swap in a real database
+// before deploying anywhere but a persistent single-process server.
 function readOrders() {
   try {
     const parsed = JSON.parse(fs.readFileSync(ORDERS_PATH, "utf8"));
