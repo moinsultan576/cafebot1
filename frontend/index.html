@@ -3,52 +3,150 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CafeBot Chat</title>
+  <title>CafeBot Cafe</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <div class="chat-app">
-    <header class="chat-header">
-      <div class="chat-header-avatar" aria-hidden="true">☕</div>
-      <div class="chat-header-title">
-        <h1>CafeBot</h1>
-        <span class="chat-header-status">Online</span>
-      </div>
-    </header>
+  <header class="site-header">
+    <div class="nav-container">
+      <a href="#top" class="logo">☕ CafeBot</a>
+      <nav class="main-nav" aria-label="Main navigation">
+        <ul class="nav-links">
+          <li><a href="#about">About</a></li>
+          <li><a href="#menu">Menu</a></li>
+          <li><a href="#hours">Hours &amp; Location</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
 
-    <main class="chat-messages" id="chat-messages" role="log" aria-live="polite" aria-label="Chat conversation">
-      <div class="message bot">
-        <div class="bubble">Hi there! Welcome to CafeBot ☕ How can I help you today?</div>
-      </div>
-      <div class="message customer">
-        <div class="bubble">Hi! Can I see the menu?</div>
-      </div>
-      <div class="message bot">
-        <div class="bubble">Of course! We have coffee, tea, pastries, sandwiches, salads, and desserts. Want me to recommend something?</div>
-      </div>
-      <div class="message customer">
-        <div class="bubble">Yes please, something with coffee.</div>
-      </div>
-      <div class="message bot">
-        <div class="bubble">Our Caffe Latte is a customer favorite — smooth espresso with steamed milk. Would you like to add that to your order?</div>
-      </div>
-    </main>
+  <main>
+    <section id="top" class="hero">
+      <h1>Great coffee, warm welcome.</h1>
+      <p class="hero-subtitle">
+        Fresh-roasted coffee, house-baked pastries, and a cozy spot to slow down.
+      </p>
+      <a href="#menu" class="btn-primary">View Our Menu</a>
+    </section>
 
-    <form class="chat-input-row" id="chat-form">
-      <input
-        type="text"
-        id="chat-input"
-        class="chat-input"
-        placeholder="Type a message..."
-        aria-label="Type a message"
-        autocomplete="off"
-      />
-      <button type="submit" class="chat-send-btn" id="chat-send-btn" aria-label="Send message">
-        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">
-          <path d="M2 21l21-9L2 3v7l15 2-15 2v7z" />
-        </svg>
-      </button>
-    </form>
+    <section id="about" class="about">
+      <div class="about-content">
+        <h2>About CafeBot</h2>
+        <p>
+          CafeBot is a neighborhood cafe serving carefully sourced coffee and
+          tea alongside fresh pastries, sandwiches, and salads made daily.
+          Whether you're grabbing a quick espresso or settling in for the
+          afternoon, we're glad to have you.
+        </p>
+      </div>
+    </section>
+
+    <section id="menu" class="menu">
+      <h2>Our Menu</h2>
+      <div class="menu-grid">
+        <article class="menu-card">
+          <h3>Espresso</h3>
+          <p class="menu-card-price">$3.00</p>
+          <p class="menu-card-desc">A concentrated shot of rich, dark-roast espresso.</p>
+        </article>
+        <article class="menu-card">
+          <h3>Caffe Latte</h3>
+          <p class="menu-card-price">$4.50</p>
+          <p class="menu-card-desc">Espresso with steamed milk and a light layer of foam.</p>
+        </article>
+        <article class="menu-card">
+          <h3>Chai Latte</h3>
+          <p class="menu-card-price">$4.50</p>
+          <p class="menu-card-desc">Spiced black tea blended with steamed milk.</p>
+        </article>
+        <article class="menu-card">
+          <h3>Iced Matcha Latte</h3>
+          <p class="menu-card-price">$5.25</p>
+          <p class="menu-card-desc">Ceremonial-grade matcha whisked with cold milk over ice.</p>
+        </article>
+        <article class="menu-card">
+          <h3>Butter Croissant</h3>
+          <p class="menu-card-price">$3.50</p>
+          <p class="menu-card-desc">Flaky, all-butter croissant baked fresh daily.</p>
+        </article>
+        <article class="menu-card">
+          <h3>Avocado Toast</h3>
+          <p class="menu-card-price">$7.50</p>
+          <p class="menu-card-desc">Smashed avocado, chili flakes, and lemon on toasted sourdough.</p>
+        </article>
+        <article class="menu-card">
+          <h3>Turkey Club Sandwich</h3>
+          <p class="menu-card-price">$8.95</p>
+          <p class="menu-card-desc">Roast turkey, bacon, lettuce, and tomato on toasted white bread.</p>
+        </article>
+        <article class="menu-card">
+          <h3>Chocolate Chip Cookie</h3>
+          <p class="menu-card-price">$2.75</p>
+          <p class="menu-card-desc">Soft-baked cookie loaded with chocolate chips.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="hours" class="hours">
+      <h2>Hours &amp; Location</h2>
+      <div class="hours-content">
+        <div class="hours-list">
+          <div class="hours-row"><span>Monday – Friday</span><span>7:00 AM – 7:00 PM</span></div>
+          <div class="hours-row"><span>Saturday – Sunday</span><span>8:00 AM – 6:00 PM</span></div>
+        </div>
+        <address class="location">
+          123 Main Street<br />
+          Springfield, ST 12345
+        </address>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>☕ CafeBot</p>
+    <nav aria-label="Footer navigation">
+      <a href="#about">About</a>
+      <a href="#menu">Menu</a>
+      <a href="#hours">Hours &amp; Location</a>
+    </nav>
+    <p class="footer-copyright">&copy; 2026 CafeBot. All rights reserved.</p>
+  </footer>
+
+  <div class="chat-widget">
+    <button id="chat-toggle" class="chat-toggle" aria-label="Open chat" aria-expanded="false" aria-controls="chat-window">
+      <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor" aria-hidden="true">
+        <path d="M4 4h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H9l-5 4v-4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z" />
+      </svg>
+    </button>
+
+    <div id="chat-window" class="chat-window" role="dialog" aria-label="CafeBot chat" aria-hidden="true">
+      <div class="chat-window-header">
+        <span>☕ CafeBot</span>
+        <button id="chat-close" class="chat-close" aria-label="Close chat">&times;</button>
+      </div>
+
+      <div id="chat-messages" class="chat-messages" role="log" aria-live="polite" aria-label="Chat conversation">
+        <div class="message bot">
+          <div class="bubble">Hi there! Welcome to CafeBot ☕ How can I help you today?</div>
+        </div>
+      </div>
+
+      <form id="chat-form" class="chat-input-row">
+        <input
+          type="text"
+          id="chat-input"
+          class="chat-input"
+          placeholder="Type a message..."
+          aria-label="Type a message"
+          autocomplete="off"
+        />
+        <button type="submit" class="chat-send-btn" aria-label="Send message">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">
+            <path d="M2 21l21-9L2 3v7l15 2-15 2v7z" />
+          </svg>
+        </button>
+      </form>
+    </div>
   </div>
 
   <script src="script.js"></script>

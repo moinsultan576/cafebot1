@@ -1,16 +1,13 @@
-// Mock-only chat interface. No AI API, database, or auth is connected here.
+// Floating chat widget UI. Mock replies only — not wired to the backend yet.
 
+const chatToggle = document.getElementById("chat-toggle");
+const chatWindow = document.getElementById("chat-window");
+const chatClose = document.getElementById("chat-close");
 const chatForm = document.getElementById("chat-form");
 const chatInput = document.getElementById("chat-input");
 const chatMessages = document.getElementById("chat-messages");
 
-// Canned replies used only to demonstrate the bot bubble style.
-const MOCK_REPLIES = [
-  "Got it! Anything else I can help with?",
-  "Sounds good — I've noted that down.",
-  "Great choice! Would you like to add anything else?",
-  "Thanks for letting me know!",
-];
+const MOCK_REPLY = "Hi! I'm CafeBot. My AI brain isn't connected yet.";
 
 function addMessage(text, sender) {
   const message = document.createElement("div");
@@ -25,6 +22,29 @@ function addMessage(text, sender) {
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
+function openChat() {
+  chatWindow.classList.add("open");
+  chatWindow.setAttribute("aria-hidden", "false");
+  chatToggle.setAttribute("aria-expanded", "true");
+  chatInput.focus();
+}
+
+function closeChat() {
+  chatWindow.classList.remove("open");
+  chatWindow.setAttribute("aria-hidden", "true");
+  chatToggle.setAttribute("aria-expanded", "false");
+}
+
+chatToggle.addEventListener("click", () => {
+  if (chatWindow.classList.contains("open")) {
+    closeChat();
+  } else {
+    openChat();
+  }
+});
+
+chatClose.addEventListener("click", closeChat);
+
 chatForm.addEventListener("submit", (event) => {
   event.preventDefault();
 
@@ -34,6 +54,5 @@ chatForm.addEventListener("submit", (event) => {
   addMessage(text, "customer");
   chatInput.value = "";
 
-  const reply = MOCK_REPLIES[Math.floor(Math.random() * MOCK_REPLIES.length)];
-  setTimeout(() => addMessage(reply, "bot"), 500);
+  addMessage(MOCK_REPLY, "bot");
 });
